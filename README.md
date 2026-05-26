@@ -250,11 +250,111 @@ pantalla, debe hacerse en formato *markdown*).
         f_out.write(data_out)
  ```
 ##### Código de `mono2estereo()`
-
+```python
+def mono2estereo(ficIzq, ficDer, ficEste):
+    """
+    Lee los ficheros ficIzq y ficDer (mono) y construye con ellos
+    un fichero estéreo que almacena en ficEste.
+    """
+    with open(ficIzq, 'rb') as f_izq, open(ficDer, 'rb') as f_der:
+        fmt_izq, size_izq, offset_izq = leer_riff_wave(f_izq)
+        fmt_der, size_der, offset_der = leer_riff_wave(f_der)
+        
+        if fmt_izq["num_channels"] != 1 or fmt_der["num_channels"] != 1:
+            raise ValueError("Ambos ficheros de entrada deben ser monofónicos.")
+        if fmt_izq["sample_rate"] != fmt_der["sample_rate"]:
+            raise ValueError("La frecuencia de muestreo de ambos ficheros debe ser idéntica.")
+        if size_izq != size_der:
+            raise ValueError("Ambos ficheros deben tener la misma cantidad de muestras.")
+            
+        f_izq.seek(offset_izq)
+        f_der.seek(offset_der)
+        raw_izq = f_izq.read(size_izq)
+        raw_der = f_der.read(size_der)
+        
+    num_muestras = size_izq // 2
+    L = struct.unpack(f'<{num_muestras}h', raw_izq)
+    R = struct.unpack(f'<{num_muestras}h', raw_der)
+    
+    muestras_estereo = [val for par in zip(L, R) for val in par]
+    data_out = struct.pack(f'<{len(muestras_estereo)}h', *muestras_estereo)
+    
+    with open(ficEste, 'wb') as f_out:
+        escribir_cabecera(f_out, num_channels=2, sample_rate=fmt_izq["sample_rate"],
+                          bits_per_sample=16, data_size=len(data_out))
+        f_out.write(data_out)
+```     
 ##### Código de `codEstereo()`
-
+```phyton
+def codEstereo(ficEste, ficCod):
+    """
+    Lee un archivo estéreo de 16 bits y genera un archivo mono
+    de 32 bits donde los MSB son la semisuma y los LSB la semidiferencia.
+    """
+    with open(ficEste, 'rb') as f_in:
+        fmt, data_size, data_offset = leer_riff_wave(f_in)
+        
+        if fmt["num_channels"] != 2:
+            raise ValueError("El fichero de entrada debe ser estéreo.")
+        if fmt["bits_per_sample"] != 16:
+            raise ValueError("El fichero de entrada debe ser de 16 bits.")
+            
+        f_in.seek(data_offset)
+        raw_data = f_in.read(data_size)
+        
+    num_muestras = data_size // 2
+    muestras = struct.unpack(f'<{num_muestras}h', raw_data)
+    
+    L = muestras[0::2]
+    R = muestras[1::2]
+    
+    S = [(l + r) // 2 for l, r in zip(L, R)]
+    D = [(l - r) // 2 for l, r in zip(L, R)]
+    
+    muestras_32 = [(s << 16) | (d & 0xFFFF) for s, d in zip(S, D)]
+    data_out = struct.pack(f'<{len(muestras_32)}i', *muestras_32)
+    
+    with open(ficCod, 'wb') as f_out:
+        escribir_cabecera(f_out, num_channels=1, sample_rate=fmt["sample_rate"],
+                          bits_per_sample=32, data_size=len(data_out))
+        f_out.write(data_out)
+```
 ##### Código de `decEstereo()`
-
+```phyton
+def decEstereo(ficCod, ficEste):
+    """
+    Decodifica un fichero de 32 bits y genera un estéreo
+    de 16 bits reconstruyendo los canales L y R originales.
+    """
+    with open(ficCod, 'rb') as f_in:
+        fmt, data_size, data_offset = leer_riff_wave(f_in)
+        
+        if fmt["num_channels"] != 1:
+            raise ValueError("El fichero codificado debe ser monofónico de 32 bits.")
+        if fmt["bits_per_sample"] != 32:
+            raise ValueError("Se requiere un fichero codificado en 32 bits.")
+            
+        f_in.seek(data_offset)
+        raw_data = f_in.read(data_size)
+        
+    num_muestras = data_size // 4
+    muestras_32 = struct.unpack(f'<{num_muestras}i', raw_data)
+    
+    S = [val >> 16 for val in muestras_32]
+    D_raw = [val & 0xFFFF for val in muestras_32]
+    D = [d if d < 32768 else d - 65536 for d in D_raw]
+    
+    L = [max(-32768, min(32767, s + d)) for s, d in zip(S, D)]
+    R = [max(-32768, min(32767, s - d)) for s, d in zip(S, D)]
+    
+    muestras_estereo = [val for par in zip(L, R) for val in par]
+    data_out = struct.pack(f'<{len(muestras_estereo)}h', *muestras_estereo)
+    
+    with open(ficEste, 'wb') as f_out:
+        escribir_cabecera(f_out, num_channels=2, sample_rate=fmt["sample_rate"],
+                          bits_per_sample=16, data_size=len(data_out))
+        f_out.write(data_out)
+```
 #### Subida del resultado al repositorio GitHub y *pull-request*
 
 La entrega se formalizará mediante *pull request* al repositorio de la tarea.
