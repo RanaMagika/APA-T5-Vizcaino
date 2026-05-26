@@ -285,7 +285,7 @@ def mono2estereo(ficIzq, ficDer, ficEste):
         f_out.write(data_out)
 ```     
 ##### Código de `codEstereo()`
- ```phyton
+ ```python
 def codEstereo(ficEste, ficCod):
     """
     Lee un archivo estéreo de 16 bits y genera un archivo mono
@@ -320,7 +320,7 @@ def codEstereo(ficEste, ficCod):
         f_out.write(data_out)
 ```
 ##### Código de `decEstereo()`
- ```phyton
+ ```python
 def decEstereo(ficCod, ficEste):
     """
     Decodifica un fichero de 32 bits y genera un estéreo
