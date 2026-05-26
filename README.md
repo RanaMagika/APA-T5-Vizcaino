@@ -250,7 +250,7 @@ pantalla, debe hacerse en formato *markdown*).
         f_out.write(data_out)
  ```
 ##### Código de `mono2estereo()`
-```python
+ ```python
 def mono2estereo(ficIzq, ficDer, ficEste):
     """
     Lee los ficheros ficIzq y ficDer (mono) y construye con ellos
@@ -285,7 +285,7 @@ def mono2estereo(ficIzq, ficDer, ficEste):
         f_out.write(data_out)
 ```     
 ##### Código de `codEstereo()`
-```phyton
+ ```phyton
 def codEstereo(ficEste, ficCod):
     """
     Lee un archivo estéreo de 16 bits y genera un archivo mono
@@ -320,7 +320,7 @@ def codEstereo(ficEste, ficCod):
         f_out.write(data_out)
 ```
 ##### Código de `decEstereo()`
-```phyton
+ ```phyton
 def decEstereo(ficCod, ficEste):
     """
     Decodifica un fichero de 32 bits y genera un estéreo
