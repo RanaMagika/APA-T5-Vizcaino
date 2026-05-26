@@ -207,12 +207,13 @@ para que se realice el realce sintáctico en Python del mismo (no vale insertar 
 pantalla, debe hacerse en formato *markdown*).
 
 ##### Código de `estereo2mono()`
+  ```python
   def estereo2mono(ficEste, ficMono, canal=2):
     """
     Lee el fichero ficEste, que contiene una señal estéreo, y escribe
     el fichero ficMono con una señal monofónica según el valor del canal.
     """
-     if canal not in (0, 1, 2, 3):
+    if canal not in (0, 1, 2, 3):
         raise ValueError("Canal no válido. Debe ser 0 (L), 1 (R), 2 (semisuma) o 3 (semidiferencia).")
         
     with open(ficEste, 'rb') as f_in:
@@ -247,7 +248,7 @@ pantalla, debe hacerse en formato *markdown*).
         escribir_cabecera(f_out, num_channels=1, sample_rate=fmt["sample_rate"], 
                           bits_per_sample=16, data_size=len(data_out))
         f_out.write(data_out)
-
+ ```
 ##### Código de `mono2estereo()`
 
 ##### Código de `codEstereo()`
