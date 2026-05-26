@@ -207,6 +207,46 @@ para que se realice el realce sintáctico en Python del mismo (no vale insertar 
 pantalla, debe hacerse en formato *markdown*).
 
 ##### Código de `estereo2mono()`
+  def estereo2mono(ficEste, ficMono, canal=2):
+    """
+    Lee el fichero ficEste, que contiene una señal estéreo, y escribe
+    el fichero ficMono con una señal monofónica según el valor del canal.
+    """
+     if canal not in (0, 1, 2, 3):
+        raise ValueError("Canal no válido. Debe ser 0 (L), 1 (R), 2 (semisuma) o 3 (semidiferencia).")
+        
+    with open(ficEste, 'rb') as f_in:
+        fmt, data_size, data_offset = leer_riff_wave(f_in)
+        
+        if fmt["num_channels"] != 2:
+            raise ValueError("El archivo de entrada debe ser estéreo (2 canales).")
+        if fmt["bits_per_sample"] != 16:
+            raise ValueError("El archivo debe tener muestras codificadas en 16 bits.")
+            
+        f_in.seek(data_offset)
+        raw_data = f_in.read(data_size)
+        
+    num_muestras = data_size // 2
+    muestras = struct.unpack(f'<{num_muestras}h', raw_data)
+    
+    L = muestras[0::2]
+    R = muestras[1::2]
+    
+    if canal == 0:
+        muestras_mono = L
+    elif canal == 1:
+        muestras_mono = R
+    elif canal == 2:
+        muestras_mono = [(l + r) // 2 for l, r in zip(L, R)]
+    elif canal == 3:
+        muestras_mono = [(l - r) // 2 for l, r in zip(L, R)]
+        
+    data_out = struct.pack(f'<{len(muestras_mono)}h', *muestras_mono)
+    
+    with open(ficMono, 'wb') as f_out:
+        escribir_cabecera(f_out, num_channels=1, sample_rate=fmt["sample_rate"], 
+                          bits_per_sample=16, data_size=len(data_out))
+        f_out.write(data_out)
 
 ##### Código de `mono2estereo()`
 
